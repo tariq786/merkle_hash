@@ -1,11 +1,5 @@
 from collections import deque
 
-#branch_bits = ''
-#parents = deque([])
-#path  = deque([])
-#val = ''
-#prev_bits=''
-#prev_root=None
 
 class Node(object):
     def __init__(self,bits,data):
@@ -47,7 +41,7 @@ class Tree(object):
     def has_Key(self,key):
         return ''
 
-    def insert_Item(self,key,datastr):
+    def insert_Item(self,root,key,datastr):
         # Single node case, where only one key has already been inserted,root points to leaf node
         if (len(self.root.bits) == 4):
             self.prev_root = self.root      #save prev root
@@ -63,8 +57,10 @@ class Tree(object):
             else:
                 self.root.c1 = self.prev_root
                 self.root.c0 = n
-            self.prev_bits = self.prev_bits[len(common)+1:]  # remove common bits + branch bit from old node
-            n.key = key[len(common)+1:]            # remove common bits + branch bit from new node
+
+            self.root.c0.bits = self.root.c0.bits[len(common) + 1:]#remove common bits + branch bit from old or new node
+            self.root.c1.bits = self.root.c1.bits[len(common) + 1:]#remove common bits + branch bit from old or new node
+
         # inner node with empty bits
         elif(self.root.bits == '' and (self.root.c0 != None or self.root.c1 != None) ):
             #First find the appropriate place to insert the new key
@@ -85,6 +81,7 @@ class Tree(object):
             if (common == '' or  ( len(common) < len(self.root.bits) ) ): #inser new inner node above this inner node (Github C=1111 insertion)
                 i = Inner()  # create new inner node
                 n = Node(key, datastr)  # create new leaf node
+
                 if len(self.path) != 0:
                     path_prev_bit = self.path.pop()
                     if path_prev_bit == '0':
@@ -94,29 +91,39 @@ class Tree(object):
                         i.c1 = self.root
                         i.c0 = n
 
-                if self.root.bits[0] == 0:
+                if self.root.bits[0] == '0':
                     i.c0 = self.root
+                    i.c1 = n
                 else:
                     i.c1 = self.root
+                    i.c0 = n
+
                 i.bits = common ##double check this value
                 self.root.bits = self.root.bits[len(common)+1:]
 
                 #prev_bits = prev_bits[len(common) + 1:]  # remove common bits + branch bit from old node
                 #self.root.bits = self.root.bits[1:] #decrease bit due to branching
-                n.key = key[len(common) + 1:]  # remove common bits + branch bit from new node
+                n.bits = key[len(common) + 1:]  # remove common bits + branch bit from new node
 
                 # update the parent of i
                 if len(self.parents) != 0:
                     parent = self.parents.pop()
-                    if(path_prev_bit == 0):
+                    if(path_prev_bit == '0'):
                         parent.c0 = i  # check whether c0 or c1
                     else:
                         parent.c1 = i  # check whether c0 or c1
                 else:
                     self.root = i
 
-                self.branch_bits = ''
-                self.prev_bits = ''
+            elif (len(common) == len(self.root.bits)):
+                msb = key[len(common)]
+                self.branch_bits += msb
+                self.parents.append(self.root)
+                self.path.append(msb)
+                if (msb):
+                    self.insert_Item(self.root.c1, key[len(common)+1:], datastr)  # eventually takes you to leaf
+                else:
+                    self.insert_Item(self.root.c0, key[len(common)+1:], datastr)  # eventually takes you to leaf
 
 
         elif ( isinstance(self.root,Node) and len(self.root.bits) < 4  ):  # leaf node reached
@@ -133,7 +140,7 @@ class Tree(object):
                 i.c1 = self.root
                 i.c0 = n
             self.prev_bits = self.prev_bits[len(common) + 1:]  # remove common bits + branch bit from old node
-            n.key = key[len(common) + 1:]  # remove common bits + branch bit from new node
+            n.bits = key[len(common) + 1:]  # remove common bits + branch bit from new node
             # update the parent of i
             parent = self.parents.pop()
             parent.c0 = i  # check whether c0 or c1
@@ -142,10 +149,13 @@ class Tree(object):
             parent.bits = i.bits[0]
             i.bits = i.bits[1:]  # check if an expression is needed instead of ''
             branch_bits = ''
-        else:
-            print "not found"
 
-
+        # clean up
+        self.branch_bits = ''
+        self.parents = deque([])
+        self.path = deque([])
+        self.prev_bits = ''
+        self.prev_root = None
 
     ############################
     def insert(self,key,datastr):
@@ -154,7 +164,7 @@ class Tree(object):
             self.root = n
         else:
             #if self.has_Key(key) == '': #Key does not already exist
-            self.insert_Item(key,datastr)
+            self.insert_Item(self.root,key,datastr)
             #else:
             #    print "Key already present"
 
@@ -166,5 +176,6 @@ if __name__ == '__main__':
     t.insert('0000','A')
     t.insert('0001','B')
     t.insert('0010','C')
+    t.insert('0011','D')
 
 
