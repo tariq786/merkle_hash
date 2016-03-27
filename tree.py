@@ -128,7 +128,7 @@ class Tree(object):
                         i = Inner()  # create new inner node
                         n = Node(key, datastr)  # create new leaf node
                         current = self.parents[-1]
-                        if (current.c1.bits == '0'):
+                        if (current.c1.bits[-1] == '0'):
                             i.c0 = self.root.c1
                             i.c1 = n
                         else:
@@ -137,13 +137,13 @@ class Tree(object):
 
                         i.c0.bits = self.root.c0.bits[len(common) + 1:]  # remove common bits + branch bit from old or new node
                         i.c1.bits = self.root.c1.bits[len(common) + 1:]  # remove common bits + branch bit from old or new node
-
+                        i.bits = common
 
                         # update the parent of i
                         if len(self.parents) != 0:
                             parent = self.parents.pop()
                             path_prev_bit = self.path.pop()
-                            if (path_prev_bit == '0'):
+                            if (path_prev_bit[-1] == '0'):
                                 parent.c0 = i  # check whether c0 or c1
                             else:
                                 parent.c1 = i  # check whether c0 or c1
@@ -232,5 +232,6 @@ if __name__ == '__main__':
     t.insert('0010','C')
     t.insert('0011','D')
     t.insert('0100','E')
-
+    t.insert('0101','F')
+    t.insert('0110','G')
 
