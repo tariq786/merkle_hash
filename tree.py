@@ -1,10 +1,15 @@
 from collections import deque
+from hashlib import md5
 
+
+ans =[] #for hashing
 
 class Node(object):
     def __init__(self,bits,data):
         self.bits = bits
         self.data = data
+        self.c1=None
+        self.c0=None
 
 
 class Inner(object):
@@ -42,7 +47,29 @@ class Tree(object):
         return s1[x_longest - longest: x_longest]
 
     def has_Key(self,key):
-        return ''
+        if(self.root.bits == key):
+            print "->"+self.root.data
+        else:
+            while(isinstance(self.root,Node) == False):
+                if self.root.bits == '':
+                    if(key[0] == '0'):
+                        self.root = self.root.c0
+                    else:
+                        self.root = self.root.c1
+                    key=key[1:]
+                else:
+                    key=key[len(self.root.bits):]
+                    if (key[0] == '0'):
+                        self.root = self.root.c0
+                    else:
+                        self.root = self.root.c1
+            if(self.root.data != ''):
+                print"->"+self.root.data
+            else:
+                print "not found"
+
+
+
 
     def insert_Item(self,key,datastr):
         # Single node case, where only one key has already been inserted,root points to leaf node
@@ -626,32 +653,67 @@ class Tree(object):
             #else:
             #    print "Key already present"
 
+    def peek(self,stack):
+        if len(stack) > 0:
+            return stack[-1]
+        return None
+
+    def hash(self):
+        # Create two stacks
+        s1 = []
+        s2 = []
+
+        # Push root to first stack
+        s1.append(self.root)
+
+        # Run while first stack is not empty
+        while (len(s1) > 0):
+
+            # Pop an item from s1 and append it to s2
+            node = s1.pop()
+            s2.append(node)
+
+            # Push left and right children of removed item to s1
+            if node.c0 is not None:
+                s1.append(node.c0)
+            if node.c1 is not None:
+                s1.append(node.c1)
+
+                # Print all elements of second stack
+        while (len(s2) > 0):
+            node = s2.pop()
+            print md5(node.bits + ':'+ node.data).hexdigest()
 
 
 
 if __name__ == '__main__':
     t = Tree()
+    t.insert('1111', 'A')
+    t.insert('1110', 'B')
+#    t.hash() #hashing is in progress
 
-    t.insert('0000','A')
-    t.insert('0001','B')
-    t.insert('0010','C')
-    t.insert('0011','D')
-    t.insert('0100','E')
-    t.insert('0101','F')
-    t.insert('0110','G')
-    t.insert('0111','H')
-    t.insert('1000','I')
-    t.insert('1001','J')
-    t.insert('1010','K')
-    t.insert('1011','L')
-    t.insert('1100','M')
-    t.insert('1101','N')
-    t.insert('1110','O')
-    t.insert('1111','P')
+    # t.insert('0000','A')
+    # t.insert('0001','B')
+    # t.insert('0010','C')
+    # t.insert('0011','D')
+    # t.insert('0100','E')
+    # t.insert('0101','F')
+    # t.insert('0110','G')
+    # t.insert('0111','H')
+    # t.insert('1000','I')
+    # t.insert('1001','J')
+    # t.insert('1010','K')
+    # t.insert('1011','L')
+    # t.insert('1100','M')
+    # t.insert('1101','N')
+    # t.insert('1110','O')
+    # t.insert('1111','P')
+    # t.has_Key('0110')
 
     # t.insert('0101','A')
     # t.insert('0110','B')
     # t.insert('1111','C')
+    # t.has_Key('0110')
 
     # t.insert('1111', 'A')
     # t.insert('1110', 'B')
@@ -668,7 +730,8 @@ if __name__ == '__main__':
     # t.insert('0100', 'F')
 
 
-    # t.insert('1111', 'A')
-    # t.insert('1110', 'B')
+
     # t.insert('1101', 'C')
     # t.insert('1100', 'D')
+
+
