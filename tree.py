@@ -19,6 +19,7 @@ class Tree(object):
         self.root = None
 
         self.branch_bits = ''
+        self.key_bits = ''
         self.parents = deque([])
         self.path = deque([])
         self.prev_bits = ''
@@ -36,6 +37,8 @@ class Tree(object):
                         x_longest = x
                 else:
                     m[x][y] = 0
+                    if (x==1 and y==1):
+                        return ''
         return s1[x_longest - longest: x_longest]
 
     def has_Key(self,key):
@@ -66,6 +69,7 @@ class Tree(object):
             #First find the appropriate place to insert the new key
             msb = key[0]
             self.branch_bits += msb
+            self.key_bits +=msb
             self.parents.append(self.root)
             self.path.append(msb)
             if (msb == '1'):
@@ -81,7 +85,7 @@ class Tree(object):
                         if (current2.c1.bits[0] == '0'):  # [0] vs [-1]
                             i.c0 = current2.c1  # self.root.c1
                             i.c0.bits = i.c0.bits[1:]  # decrease inner node bits by 1 for branching
-                            if (len(i.c0.bits) == 1):
+                            if (len(i.c0.bits) == 1 and i.c0.bits != '1'):
                                 i.bits = i.c0.bits[0]
                                 i.c0.bits = i.c0.bits[len(self.branch_bits) + len(i.bits):]
                                 self.branch_bits += i.bits
@@ -90,7 +94,7 @@ class Tree(object):
                         else:
                             i.c1 = current2.c1  # self.root.c0 #decrease inner node bits by 1
                             i.c1.bits = i.c1.bits[1:]
-                            if (len(i.c1.bits) == 1):
+                            if (len(i.c1.bits) == 1 and i.c1.bits != '1'):
                                 i.bits = i.c1.bits[0]
                                 i.c1.bits = i.c1.bits[len(self.branch_bits) + len(i.bits):]
                                 self.branch_bits += i.bits
@@ -116,13 +120,17 @@ class Tree(object):
                     else:
                         self.parents.append(current)
                         self.branch_bits += current.bits
-                        while (isinstance(current, Node) == False):
+                        self.key_bits += current.bits
+                        while (isinstance(current, Node) == False and self.branch_bits[-1] == key[len(self.branch_bits)-1]):
                             if key[len(self.branch_bits) + j] == '0':
                                 current = current.c0
+                                self.branch_bits += '0'
                             else:
                                 current = current.c1
-                            self.path.append(key[len(self.branch_bits) + j])
-                            self.branch_bits += key[len(self.branch_bits) + j]
+                                self.branch_bits += '1'
+                            self.path.append(key[len(self.key_bits) + j])
+                            self.key_bits += key[len(self.key_bits) + j]
+                            self.branch_bits += current.bits
                             self.parents.append(current)
                             j = j + 1
                         # Now insert         #H#
@@ -133,20 +141,28 @@ class Tree(object):
                         current2 = self.parents[-1]
                         if (current2.bits[0] == '0'):  # [-1] vs [0]
                             i.c0 = current2
-                            i.c0.bits = i.c0.bits[1:]
-                            self.branch_bits += '1'
+                            i.c0.bits = i.c0.bits[1:]   #for branching
+                            if (len(i.c0.bits) != 0):
+                                i.bits = self.longest_common_substring(i.c0.bits,key[len(self.key_bits):len(self.key_bits)+len(i.c0.bits)])  # i.c0.bits[0]
+                                i.c0.bits = i.c0.bits[len(self.branch_bits) + len(i.bits):]
+                                self.key_bits += i.bits
+                            self.key_bits += '1'
                             i.c1 = n
                         else:
-                            i.c1 = current2
-                            i.c1.bits = i.c1.bits[1:]
-                            self.branch_bits += '0'
-                            i.c0 = n
+                            i.c0 = current2
+                            i.c0.bits = i.c0.bits[1:] #for branching
+                            if (len(i.c0.bits) != 0):
+                                i.bits = self.longest_common_substring(i.c0.bits, key[len(self.key_bits):len(self.key_bits)+len(i.c0.bits)])  # i.c1.bits
+                                i.c0.bits = i.c0.bits[len(self.branch_bits) + len(i.bits):]
+                                self.key_bits += i.bits
+                            self.key_bits += '0'
+                            i.c1 = n
 
                         # i.c0.bits = self.root.c0.bits[len(common) + 1:]  # remove common bits + branch bit from old or new node
                         # i.c1.bits = self.root.c1.bits[len(common) + 1:]  # remove common bits + branch bit from old or new node
                         # i.bits = common
-                        i.bits = ''  # double check
-                        n.bits = n.bits[len(self.branch_bits):]  # traverse bits + branch bit
+                        #i.bits = ''  # double check
+                        n.bits = n.bits[len(self.key_bits):]  # traverse bits + branch bit
 
                         # update the parent of i
                         if len(self.parents) != 0:
@@ -169,19 +185,19 @@ class Tree(object):
                         i.c1 = n
                         i.c0.bits = i.c0.bits[1:] #remove MSB for branching
                         if (len(i.c0.bits) != 0):
-                            i.bits = self.longest_common_substring(i.c0.bits,key[1:len(i.c0.bits)+1])#i.c0.bits[0]
+                            i.bits = self.longest_common_substring(i.c0.bits,key[len(self.branch_bits):len(self.branch_bits)+len(i.c0.bits)])#i.c0.bits[0]
                             i.c0.bits = i.c0.bits[len(self.branch_bits)+len(i.bits):]
                             self.branch_bits += i.bits
                         self.branch_bits += '1'
                     else:
-                        i.c1 = current2.c0
-                        i.c1.bits = i.c1.bits[1:]
-                        if (len(i.c1.bits) != 0):
-                            i.bits = self.longest_common_substring(i.c1.bits[1:],key[1:])#i.c1.bits
-                            i.c1.bits = i.c1.bits[len(self.branch_bits)+len(i.bits):]
+                        i.c0 = current2.c0
+                        i.c0.bits = i.c0.bits[1:]
+                        if (len(i.c0.bits) != 0):
+                            i.bits = self.longest_common_substring(i.c0.bits,key[len(self.branch_bits):len(self.branch_bits)+len(i.c0.bits)])#i.c1.bits
+                            i.c0.bits = i.c0.bits[len(self.branch_bits)+len(i.bits):]
                             self.branch_bits += i.bits
                         self.branch_bits += '0'
-                        i.c0 = n
+                        i.c1 = n
 
                     # i.c0.bits = i.c0.bits[len(self.branch_bits):]  # remove common bits + branch bit from old or new node
                     # i.c1.bits = i.c1.bits[len(self.branch_bits):]  # remove common bits + branch bit from old or new node
@@ -210,26 +226,44 @@ class Tree(object):
                         i = Inner()  # create new inner node
                         n = Node(key, datastr)  # create new leaf node
                         current2 = self.parents[-1]
-                        if (current2.c0.bits[-1] == '0'):
-                            i.c0 = current2.c0  # self.root.c0
-                            i.c0.bits = ''  # decrease inner node bits by 1
+                        # if (current2.c0.bits[-1] == '0'):
+                        #     i.c0 = current2.c0  # self.root.c0
+                        #     i.c0.bits = ''  # decrease inner node bits by 1
+                        #     i.c1 = n
+                        if (current2.c1.bits[0] == '0'):  # 0 vs -1
+                            i.c0 = current2.c1
+                            i.c0.bits = i.c0.bits[1:]
+                            if (len(i.c0.bits) != 0):
+                                i.bits = self.longest_common_substring(i.c0.bits, key[len(self.key_bits):len(self.key_bits) + len(i.c0.bits)])  # i.c0.bits[0]
+                                i.c0.bits = i.c0.bits[len(self.branch_bits) + len(i.bits):]
+                                self.branch_bits += i.bits
+                            self.branch_bits += '1'
                             i.c1 = n
                         else:
-                            i.c1 = current2.c0  # self.root.c0  # decrease inner node bits by 1
-                            i.c1.bits = ''
-                            i.c0 = n
+                            # i.c1 = current2.c0  # self.root.c0  # decrease inner node bits by 1
+                            # i.c1.bits = ''
+                            # i.c0 = n
+                            i.c0 = current2.c0
+                            i.c0.bits = i.c0.bits[1:]
+                            if (len(i.c0.bits) != 0):
+                                i.bits = self.longest_common_substring(i.c0.bits, key[len(self.key_bits):len(self.key_bits) + len(i.c0.bits)])  # i.c1.bits
+                                i.c0.bits = i.c0.bits[len(self.branch_bits) + len(i.bits):]
+                                self.branch_bits += i.bits
+                            self.branch_bits += '0'
+                            i.c1 = n
+
 
                         # i.c0.bits = self.root.c0.bits[len(common) + 1:]  # remove common bits + branch bit from old or new node
                         # i.c1.bits = self.root.c1.bits[len(common) + 1:]  # remove common bits + branch bit from old or new node
 
-                        i.bits = ''  # double check
+                        #i.bits = ''  # double check
                         n.bits = n.bits[len(self.branch_bits):]  # traverse bits + branch bit
 
                         # update the parent of i
                         if len(self.parents) != 0:
                             parent = self.parents.pop()
                             path_prev_bit = self.path.pop()
-                            if (path_prev_bit == '0'):
+                            if (path_prev_bit[-1] == '0'):
                                 parent.c0 = i  # check whether c0 or c1
                             else:
                                 parent.c1 = i  # check whether c0 or c1
@@ -238,13 +272,17 @@ class Tree(object):
                     else:
                         self.parents.append(current)
                         self.branch_bits += current.bits #if any
-                        while (isinstance(current, Node) == False):
+                        self.key_bits += current.bits
+                        while (isinstance(current, Node) == False and self.branch_bits[-1] == key[len(self.branch_bits)-1]) :
                             if key[len(self.branch_bits) + j] == '0':
                                 current = current.c0
+                                self.branch_bits += '0'
                             else:
                                 current = current.c1
-                            self.path.append(key[len(self.branch_bits) + j])
-                            self.branch_bits += key[len(self.branch_bits) + j]
+                                self.branch_bits += '1'
+                            self.path.append(key[len(self.key_bits) + j])
+                            self.branch_bits += current.bits
+                            self.key_bits+= key[len(self.key_bits) + j]
                             self.parents.append(current)
                             j = j + 1
                         # Now insert         #H#
@@ -253,20 +291,30 @@ class Tree(object):
                         i = Inner()  # create new inner node
                         n = Node(key, datastr)  # create new leaf node
                         current2 = self.parents[-1]
-                        if (current2.bits[0] == '0'):  # [0] vs [-1]
+                        if (current2.bits[0] == '0'):  # 0 vs -1
                             i.c0 = current2
-                            i.c0.bits = ''
+                            i.c0.bits = i.c0.bits[1:]
+                            if (len(i.c0.bits) != 0):
+                                i.bits = self.longest_common_substring(i.c0.bits, key[len(self.key_bits):len(self.key_bits)+len(i.c0.bits)])  # i.c0.bits[0]
+                                i.c0.bits = i.c0.bits[len(self.branch_bits) + len(i.bits):]
+                                self.key_bits += i.bits
+                            self.key_bits += '1'
                             i.c1 = n
                         else:
-                            i.c1 = current2
-                            i.c1.bits = ''
-                            i.c0 = n
+                            i.c0 = current2
+                            i.c0.bits = i.c0.bits[1:]
+                            if (len(i.c0.bits) != 0):
+                                i.bits = self.longest_common_substring(i.c0.bits, key[len(self.key_bits):len(self.key_bits)+len(i.c0.bits)])  # i.c1.bits
+                                i.c0.bits = i.c0.bits[len(self.branch_bits) + len(i.bits):]
+                                self.key_bits += i.bits
+                            self.key_bits += '0'
+                            i.c1 = n
 
                         # i.c0.bits = self.root.c0.bits[len(common) + 1:]  # remove common bits + branch bit from old or new node
                         # i.c1.bits = self.root.c1.bits[len(common) + 1:]  # remove common bits + branch bit from old or new node
                         # i.bits = common
-                        i.bits = ''  # double check
-                        n.bits = n.bits[len(self.branch_bits):]  # traverse bits + branch bit
+                        # i.bits = ''  # double check
+                        n.bits = n.bits[len(self.key_bits):]  # traverse bits + branch bit
 
                         # update the parent of i
                         if len(self.parents) != 0:
@@ -288,20 +336,20 @@ class Tree(object):
                         i.c0 = current2.c1
                         i.c0.bits = i.c0.bits[1:]
                         if (len(i.c0.bits) != 0):
-                            i.bits = self.longest_common_substring(i.c0.bits[1:], key[1:])  # i.c0.bits[0]
+                            i.bits = self.longest_common_substring(i.c0.bits, key[len(self.branch_bits):len(self.branch_bits)+len(i.c0.bits)])  # i.c0.bits[0]
                             i.c0.bits = i.c0.bits[len(self.branch_bits) + len(i.bits):]
                             self.branch_bits += i.bits
                         self.branch_bits += '1'
                         i.c1 = n
                     else:
-                        i.c1 = current2.c0
-                        i.c1.bits = i.c1.bits[1:]
-                        if (len(i.c1.bits) != 0):
-                            i.bits = self.longest_common_substring(i.c1.bits[1:], key[1:])  # i.c1.bits
-                            i.c1.bits = i.c1.bits[len(self.branch_bits) + len(i.bits):]
+                        i.c0 = current2.c0
+                        i.c0.bits = i.c0.bits[1:]
+                        if (len(i.c0.bits) != 0):
+                            i.bits = self.longest_common_substring(i.c0.bits, key[len(self.branch_bits):len(self.branch_bits)+len(i.c0.bits)])  # i.c1.bits
+                            i.c0.bits = i.c0.bits[len(self.branch_bits) + len(i.bits):]
                             self.branch_bits += i.bits
                         self.branch_bits += '0'
-                        i.c0 = n
+                        i.c1 = n
 
                     # i.c0.bits = self.root.c0.bits[len(common) + 1:]  # remove common bits + branch bit from old or new node
                     # i.c1.bits = self.root.c1.bits[len(common) + 1:]  # remove common bits + branch bit from old or new node
@@ -315,7 +363,7 @@ class Tree(object):
                     if len(self.parents) != 0:
                         parent = self.parents.pop()
                         path_prev_bit = self.path.pop()
-                        if (path_prev_bit == '0'):
+                        if (path_prev_bit[-1] == '0'):
                             parent.c0 = i  # check whether c0 or c1
                         else:
                             parent.c1 = i  # check whether c0 or c1
@@ -333,7 +381,7 @@ class Tree(object):
 
                 if len(self.path) != 0:
                     path_prev_bit = self.path.pop()
-                    if path_prev_bit == '0':
+                    if path_prev_bit[-1] == '0':
                         i.c0 = self.root
                         i.c1 = n
                     else:
@@ -358,7 +406,7 @@ class Tree(object):
                 if len(self.parents) != 0:
                     parent = self.parents.pop()
                     path_prev_bit = self.path.pop()
-                    if(path_prev_bit == '0'):
+                    if(path_prev_bit[-1] == '0'):
                         parent.c0 = i  # check whether c0 or c1
                     else:
                         parent.c1 = i  # check whether c0 or c1
@@ -380,7 +428,7 @@ class Tree(object):
                             i = Inner()  # create new inner node
                             n = Node(key, datastr)  # create new leaf node
                             current2 = self.parents[-1]
-                            if (current2.c1.bits[0] == '0'): #[0] vs [-1]
+                            if (current2.c1.bits[0] == '0' ): #[0] vs [-1]
                                 i.c0 = current2.c1#self.root.c1
                                 i.c0.bits = i.c0.bits[1:]   #decrease inner node bits by 1
                                 i.c1 = n
@@ -457,15 +505,16 @@ class Tree(object):
                         i = Inner()  # create new inner node
                         n = Node(key, datastr)  # create new leaf node
                         current2 = self.parents[-1]
-                        if (current2.c1.bits[0] == '0'): #[0]  vs [-1]
-                            i.c0 = current2.c1
-                            i.c1 = n
-                            i.c0.bits = i.c0.bits[1:]
-                            if(len(i.c0.bits) != 0):
-                                i.bits = i.c0.bits[0]
+                        if (len(current2.c1.bits) != 0): #[0]  vs [-1] if (len(current2.c1.bits) != 0):
+                            if(current2.c1.bits[0] == '0'):
+                                i.c0 = current2.c1
                                 i.c0.bits = i.c0.bits[1:]
-                                self.branch_bits += i.bits
+                                if(len(i.c0.bits) != 0):
+                                    i.bits = i.c0.bits[0]
+                                    i.c0.bits = i.c0.bits[1:]
+                                    self.branch_bits += i.bits
                             self.branch_bits += '1'
+                            i.c1 = n
                         else:
                             i.c1 = current2.c0
                             i.c1.bits = i.c1.bits[1:]
@@ -522,7 +571,7 @@ class Tree(object):
                             if len(self.parents) != 0:
                                 parent = self.parents.pop()
                                 path_prev_bit = self.path.pop()
-                                if (path_prev_bit == '0'):
+                                if (path_prev_bit[-1] == '0'):
                                     parent.c0 = i  # check whether c0 or c1
                                 else:
                                     parent.c1 = i  # check whether c0 or c1
@@ -545,8 +594,8 @@ class Tree(object):
                             i = Inner()  # create new inner node
                             n = Node(key, datastr)  # create new leaf node
                             current2 = self.parents[-1]
-                            if (current2.bits[0] == '0'): #[0] vs [-1]
-                                i.c0 = current2
+                            if (current2.c1.bits[0] == '0'): #[0] vs [-1]
+                                i.c0 = current2.c1
                                 i.c0.bits = ''
                                 i.c1 = n
                             else:
@@ -576,13 +625,14 @@ class Tree(object):
                         i = Inner()  # create new inner node
                         n = Node(key, datastr)  # create new leaf node
                         current2 = self.parents[-1]
-                        if (current2.c1.bits[0] == '0'):  #0 vs -1
-                            i.c0 = current2.c1
-                            i.c0.bits = i.c0.bits[1:]
-                            if (len(i.c0.bits) != 0):
-                                i.bits = i.c0.bits[0]
+                        if (len(current2.c1.bits) != 0):
+                            if(current2.c1.bits[0] == '0'):  #0 vs -1
+                                i.c0 = current2.c1
                                 i.c0.bits = i.c0.bits[1:]
-                                self.branch_bits += i.bits
+                                if (len(i.c0.bits) != 0):
+                                    i.bits = i.c0.bits[0]
+                                    i.c0.bits = i.c0.bits[1:]
+                                    self.branch_bits += i.bits
                             self.branch_bits += '1'
                             i.c1 = n
                         else:
@@ -607,7 +657,7 @@ class Tree(object):
                         if len(self.parents) != 0:
                             parent = self.parents.pop()
                             path_prev_bit = self.path.pop()
-                            if (path_prev_bit == '0'):
+                            if (path_prev_bit[-1] == '0'):
                                 parent.c0 = i  # check whether c0 or c1
                             else:
                                 parent.c1 = i  # check whether c0 or c1
@@ -622,6 +672,7 @@ class Tree(object):
         self.path = deque([])
         self.prev_bits = ''
         self.prev_root = None
+        self.key_bits = ''
 
     ############################
     def insert(self,key,datastr):
@@ -639,6 +690,7 @@ class Tree(object):
 
 if __name__ == '__main__':
     t = Tree()
+
     t.insert('0000','A')
     t.insert('0001','B')
     t.insert('0010','C')
@@ -652,4 +704,30 @@ if __name__ == '__main__':
     t.insert('1010','K')
     t.insert('1011','L')
     t.insert('1100','M')
+    t.insert('1101','N')
+    t.insert('1110','O')
+    t.insert('1111','P')
 
+    # t.insert('0101','A')
+    # t.insert('0110','B')
+    # t.insert('1111','C')
+
+    # t.insert('1111', 'A')
+    # t.insert('1110', 'B')
+    # t.insert('0000', 'C')
+    # t.insert('0001', 'D')
+    # t.insert('1000', 'E')
+
+
+    # t.insert('0000', 'A')
+    # t.insert('1111', 'B')
+    # t.insert('0001', 'C')
+    # t.insert('0010', 'D')
+    # t.insert('0011', 'E')
+    # t.insert('0100', 'F')
+
+
+    # t.insert('1111', 'A')
+    # t.insert('1110', 'B')
+    # t.insert('1101', 'C')
+    # t.insert('1100', 'D')
