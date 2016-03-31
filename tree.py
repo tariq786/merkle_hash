@@ -239,16 +239,16 @@ class Node(object):
                         n.bits = key
                         n.data = datastr  # create new leaf node
                         current2 = parents[-1]
-
-                        if (current2.c1.bits[0] == '0'):
-                            i.c0 = current2.c1
-                            i.c0.bits = i.c0.bits[1:]
-                            if (len(i.c0.bits) != 0):
-                                i.bits = self.longest_common_substring(i.c0.bits, key[len(key_bits):len(key_bits) + len(i.c0.bits)])  # i.c0.bits[0]
-                                i.c0.bits = i.c0.bits[len(branch_bits) + len(i.bits):]
-                                branch_bits += i.bits
-                            branch_bits += '1'
-                            i.c1 = n
+                        if len(current2.c1.bits) != 0:
+                            if (current2.c1.bits[0] == '0'):
+                                i.c0 = current2.c1
+                                i.c0.bits = i.c0.bits[1:]
+                                if (len(i.c0.bits) != 0):
+                                    i.bits = self.longest_common_substring(i.c0.bits, key[len(key_bits):len(key_bits) + len(i.c0.bits)])  # i.c0.bits[0]
+                                    i.c0.bits = i.c0.bits[len(branch_bits) + len(i.bits):]
+                                    branch_bits += i.bits
+                                branch_bits += '1'
+                                i.c1 = n
                         else:
                             # i.c1 = current2.c0  # self.c0  # decrease inner node bits by 1
                             # i.c1.bits = ''
@@ -342,16 +342,17 @@ class Node(object):
                     n.bits = key
                     n.data = datastr  # create new leaf node
                     current2 = parents[-1]
-                    if (current2.c1.bits[0] == '0'):  # 0 vs -1
-                        i.c0 = current2.c1
-                        i.c0.bits = i.c0.bits[1:]
-                        if (len(i.c0.bits) != 0):
-                            i.bits = self.longest_common_substring(i.c0.bits, key[len(branch_bits):len(
-                                branch_bits) + len(i.c0.bits)])  # i.c0.bits[0]
-                            i.c0.bits = i.c0.bits[len(branch_bits) + len(i.bits):]
-                            branch_bits += i.bits
-                        branch_bits += '1'
-                        i.c1 = n
+                    if len(current2.c1.bits) != 0:
+                        if (current2.c1.bits[0] == '0'):  # 0 vs -1
+                            i.c0 = current2.c1
+                            i.c0.bits = i.c0.bits[1:]
+                            if (len(i.c0.bits) != 0):
+                                i.bits = self.longest_common_substring(i.c0.bits, key[len(branch_bits):len(
+                                    branch_bits) + len(i.c0.bits)])  # i.c0.bits[0]
+                                i.c0.bits = i.c0.bits[len(branch_bits) + len(i.bits):]
+                                branch_bits += i.bits
+                            branch_bits += '1'
+                            i.c1 = n
                     else:
                         i.c0 = current2.c0
                         i.c0.bits = i.c0.bits[1:]
@@ -633,8 +634,8 @@ class Node(object):
                             n.bits = key
                             n.data = datastr  # create new leaf node
                             current2 = parents[-1]
-                            if (current2.c1.bits[0] == '0'):  # [0] vs [-1]
-                                i.c0 = current2.c1
+                            if (current2.bits[0] == '0'):  # [0] vs [-1]
+                                i.c0 = current2
                                 i.c0.bits = ''
                                 i.c1 = n
                             else:
@@ -783,26 +784,58 @@ if __name__ == '__main__':
     # x = t.tree_root.hash()
     # print x
 
-    #case2
-    t.insert('0000','A')
-    t.insert('0001','B')
-    t.insert('0010','C')
-    t.insert('0011','D')
-    t.insert('0100','E')
-    t.insert('0101','F')
-    t.insert('0110','G')
-    t.insert('0111','H')
-    t.insert('1000','I')
-    t.insert('1001','J')
-    t.insert('1010','K')
-    t.insert('1011','L')
-    t.insert('1100','M')
-    t.insert('1101','N')
-    t.insert('1110','O')
-    t.insert('1111','P')
+    ##case2
+    # t.insert('0000','A')
+    # t.insert('0001','B')
+    # t.insert('0010','C')
+    # t.insert('0011','D')
+    # t.insert('0100','E')
+    # t.insert('0101','F')
+    # t.insert('0110','G')
+    # t.insert('0111','H')
+    # t.insert('1000','I')
+    # t.insert('1001','J')
+    # t.insert('1010','K')
+    # t.insert('1011','L')
+    # t.insert('1100','M')
+    # t.insert('1101','N')
+    # t.insert('1110','O')
+    # t.insert('1111','P')
+    # t.tree_root.find('0110')
+    # x = t.tree_root.hash()
+    # print x
+
+
+    t.insert('1111', 'P')
+    t.insert('1110', 'O')
+    t.insert('1101', 'N')
+    t.insert('1100', 'M')
+    t.insert('1011', 'L')
+    t.insert('1010', 'K')
+    t.insert('1001', 'J')
+    t.insert('1000', 'I')
+    t.insert('0111', 'H')
+    t.insert('0110', 'G')
+    t.insert('0101', 'F')
+    t.insert('0100', 'E')
+    t.insert('0011', 'D')
+    t.insert('0010', 'C')
+    t.insert('0001', 'B')
+    t.insert('0000', 'A')
+
+
+
+
+
+
+
+
+
+
     t.tree_root.find('0110')
     x = t.tree_root.hash()
     print x
+
 
 
     # t.insert('0101','A')
